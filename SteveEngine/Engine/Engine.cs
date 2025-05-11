@@ -37,7 +37,7 @@ namespace SteveEngine
             };
 
             window = new GameWindow(GameWindowSettings.Default, nativeWindowSettings);
-            camera = new Camera(Vector3.Zero, width, height);
+            camera = new Camera(Vector3.One, width, height);
             renderer = new Renderer();
             resourceManager = new ResourceManager();
             
@@ -133,6 +133,21 @@ namespace SteveEngine
 
         private void OnUpdateFrame(FrameEventArgs e)
         {
+            float deltaTime = (float)e.Time;
+
+            // Update time system
+            Time.Update(deltaTime);
+
+            // Accumulate time for physics updates
+            physicsAccumulator += deltaTime;
+
+            // Run fixed timestep physics updates
+            while (physicsAccumulator >= FIXED_TIME_STEP)
+            {
+                Physics.FixedUpdate();
+                physicsAccumulator -= FIXED_TIME_STEP;
+            }
+
             try
             {
                 LuaFunction updateFunc = luaState.GetFunction("onUpdate");
@@ -157,6 +172,9 @@ namespace SteveEngine
 
             camera.Update((float)e.Time);
         }
+
+        private float physicsAccumulator = 0f;
+        private const float FIXED_TIME_STEP = 0.02f;
 
         private void OnRenderFrame(FrameEventArgs e)
         {

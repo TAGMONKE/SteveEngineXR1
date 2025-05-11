@@ -13,7 +13,7 @@ namespace SteveEngine
         private float yaw = -90.0f;
         private float pitch = 0.0f;
         
-        private float fov = 125.0f;
+        private float fov = 70.0f;
         
         public float AspectRatio { get; set; }
         
