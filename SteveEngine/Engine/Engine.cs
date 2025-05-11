@@ -16,12 +16,17 @@ namespace SteveEngine
         private List<GameObject> gameObjects = new List<GameObject>();
         private Renderer renderer;
         private ResourceManager resourceManager;
+        // Add this to the member variables in Engine class
+        private InputManager inputManager;
         public List<GameObject> GameObjects => gameObjects;
 
         public LuaGameObjectList LuaGameObjects
         {
             get { return new LuaGameObjectList(gameObjects); }
         }
+
+        // Add this property to expose the InputManager
+        public InputManager Input => inputManager;
 
         public Engine(int width = 800, int height = 600, string title = "SteveEngine")
         {
@@ -30,7 +35,7 @@ namespace SteveEngine
                 Size = new Vector2i(width, height),
                 Title = title
             };
-            
+
             window = new GameWindow(GameWindowSettings.Default, nativeWindowSettings);
             camera = new Camera(Vector3.Zero, width, height);
             renderer = new Renderer();
@@ -76,6 +81,16 @@ namespace SteveEngine
             window.UpdateFrame += OnUpdateFrame;
             window.RenderFrame += OnRenderFrame;
             window.Resize += OnResize;
+            inputManager = new InputManager();
+
+            window.KeyDown += OnKeyDown;
+            window.KeyUp += OnKeyUp;
+            window.MouseDown += OnMouseDown;
+            window.MouseUp += OnMouseUp;
+            window.MouseMove += OnMouseMove;
+
+            inputManager.Update(window.KeyboardState, window.MouseState);
+
         }
 
         private void OnLoad()
@@ -195,6 +210,32 @@ namespace SteveEngine
         public Shader LoadShader(string name, string vertexPath, string fragmentPath)
         {
             return resourceManager.LoadShader(name, vertexPath, fragmentPath);
+        }
+
+        // Add these methods to the Engine class
+        private void OnKeyDown(KeyboardKeyEventArgs e)
+        {
+            // Additional event handling if needed
+        }
+
+        private void OnKeyUp(KeyboardKeyEventArgs e)
+        {
+            // Additional event handling if needed
+        }
+
+        private void OnMouseDown(MouseButtonEventArgs e)
+        {
+            // Additional event handling if needed
+        }
+
+        private void OnMouseUp(MouseButtonEventArgs e)
+        {
+            // Additional event handling if needed
+        }
+
+        private void OnMouseMove(MouseMoveEventArgs e)
+        {
+            // Additional event handling if needed
         }
     }
 }

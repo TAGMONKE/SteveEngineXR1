@@ -51,10 +51,16 @@ namespace SteveEngine
                 if (textures.ContainsKey(path)) return textures[path];
 
                 Console.WriteLine($"Loading texture from {path}");
-                if (!File.Exists(path))
+                if (!File.Exists(path) && path != "default")
                 {
                     Console.WriteLine($"Texture file not found: {path}");
                     return null;
+                }
+                else if(path == "default")
+                {
+                    Console.WriteLine($"Using default texture");
+
+                    path = Path.Combine(Path.GetTempPath(), "default.png");
                 }
 
                 Texture texture = new Texture(path);
