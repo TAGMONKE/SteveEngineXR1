@@ -98,6 +98,27 @@ namespace SteveEngine
             }
         }
 
+        public void AddForceXYZ(float x, float y, float z, ForceMode mode = ForceMode.Force)
+        {
+            Vector3 force = Program.StrToV3($"{x},{y},{z}");
+
+            switch (mode)
+            {
+                case ForceMode.Force:
+                    accumulatedForce += force; // Force will be divided by mass later
+                    break;
+                case ForceMode.Acceleration:
+                    accumulatedForce += force * Mass; // Apply as force but ignore mass
+                    break;
+                case ForceMode.Impulse:
+                    Velocity += force / Mass; // Impulse causes instant velocity change based on mass
+                    break;
+                case ForceMode.VelocityChange:
+                    Velocity += force; // Instant velocity change ignoring mass
+                    break;
+            }
+        }
+
         public void AddRelativeForce(Vector3 force, ForceMode mode = ForceMode.Force)
         {
             // Convert local space force to world space

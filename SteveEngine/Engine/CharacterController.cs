@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SteveEngine.SteveEngine.Engine
+namespace SteveEngine
 {
     public class CharacterController : Component
     {

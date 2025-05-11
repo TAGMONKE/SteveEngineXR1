@@ -135,8 +135,8 @@ namespace SteveEngine
             {
                 overlaps = BoxBoxColl(this, other, out _, out _);
             }
-            else if ((Type == ColliderType.Sphere && other.Type == ColliderType.Box) ||
-                    (Type == ColliderType.Box && other.Type == ColliderType.Sphere))
+            else if (Type == ColliderType.Sphere && other.Type == ColliderType.Box ||
+                    Type == ColliderType.Box && other.Type == ColliderType.Sphere)
             {
                 Collider sphere = Type == ColliderType.Sphere ? this : other;
                 Collider box = Type == ColliderType.Box ? this : other;

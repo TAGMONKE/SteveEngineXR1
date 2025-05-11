@@ -28,16 +28,17 @@ namespace SteveEngine
         // Add this property to expose the InputManager
         public InputManager Input => inputManager;
 
-        public Engine(int width = 800, int height = 600, string title = "SteveEngine")
+        public Engine(Vector3 cameraPosition, int width = 800, int height = 600, string title = "SteveEngine", WindowState state = WindowState.Normal)
         {
             var nativeWindowSettings = new NativeWindowSettings
             {
                 Size = new Vector2i(width, height),
-                Title = title
+                Title = title,
+                WindowState = state,
             };
 
             window = new GameWindow(GameWindowSettings.Default, nativeWindowSettings);
-            camera = new Camera(Vector3.One, width, height);
+            camera = new Camera(cameraPosition, width, height);
             renderer = new Renderer();
             resourceManager = new ResourceManager();
             

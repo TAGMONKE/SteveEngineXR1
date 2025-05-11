@@ -165,7 +165,7 @@ namespace SteveEngine
                     tymax = temp;
                 }
                 
-                if ((tmin > tymax) || (tymin > tmax))
+                if (tmin > tymax || tymin > tmax)
                     continue;
                 
                 if (tymin > tmin)
@@ -184,7 +184,7 @@ namespace SteveEngine
                     tzmax = temp;
                 }
                 
-                if ((tmin > tzmax) || (tzmin > tmax))
+                if (tmin > tzmax || tzmin > tmax)
                     continue;
                 
                 if (tzmin > tmin)

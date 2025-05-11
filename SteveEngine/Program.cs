@@ -2,19 +2,74 @@ using System;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
+using Newtonsoft;
+using OpenTK.Windowing.Common;
+using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace SteveEngine
 {
-    class Program
+    public class Program
     {
+        public class Config
+        {
+            public string WindowTitle { get; set; } = "SteveEngine";
+            public int WindowWidth { get; set; } = 800;
+            public int WindowHeight { get; set; } = 600;
+            public WindowState State { get; set; } = WindowState.Normal;
+            public string CameraPosition { get; set; } = "0, 0, 0";
+            public float CameraFov { get; set; } = 70;
+            public float CameraYaw { get; set; } = -90.0f;
+            public float CameraPitch { get; set; } = 0;
+            public bool DebugMode = true;
+        }
+        [DllImport("user32.dll")]
+        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+        private const int SW_HIDE = 0;
+
+        [DllImport("kernel32.dll")]
+        static extern IntPtr GetConsoleWindow();
+
+        const int SW_SHOW = 5;
+
         static void Main(string[] args)
         {
             try
             {
+
                 Console.WriteLine("Starting SteveEngine...");
 
-                var engine = new Engine(800, 600, "SteveEngine Demo");
+                // Load configuration
+                string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
+                if (!File.Exists(configPath))
+                {
+                    Console.WriteLine($"Configuration file not found at {configPath}");
+                    Console.WriteLine("Creating default configuration...");
+                    Config defaultConfig = new Config();
+                    string defaultConfigJson = Newtonsoft.Json.JsonConvert.SerializeObject(defaultConfig, Newtonsoft.Json.Formatting.Indented);
+                    File.WriteAllText(configPath, defaultConfigJson);
+                    Console.WriteLine($"Default configuration created at {configPath}");
+                    Console.WriteLine("Please edit the configuration file and restart the application.");
+                    return;
+                }
+                string configJson = File.ReadAllText(configPath);
+                Config config = Newtonsoft.Json.JsonConvert.DeserializeObject<Config>(configJson);
+                if (config == null)
+                {
+                    Console.WriteLine("Failed to load configuration.");
+                    return;
+                }
+                Console.WriteLine($"Loaded configuration: {config.WindowTitle}, {config.WindowWidth}x{config.WindowHeight}");
+
+                var engine = new SteveEngine.Engine(StrToV3(config.CameraPosition), config.WindowWidth, config.WindowHeight, config.WindowTitle, config.State);
                 Console.WriteLine("Engine created successfully");
+
+                if(!config.DebugMode)
+                {
+                    var handle = GetConsoleWindow();
+                    ShowWindow(handle, SW_HIDE);
+                }
 
                 // Create shader files
                 Console.WriteLine("Creating shader files...");
@@ -149,5 +204,20 @@ namespace SteveEngine
                 Console.ReadKey();
             }
         }
+
+        public static OpenTK.Mathematics.Vector3 StrToV3(string input)
+        {
+            string[] parts = input.Split(',');
+            if (parts.Length != 3)
+                throw new ArgumentException("Input string must contain three comma-separated values.");
+            float x = float.Parse(parts[0]);
+            float y = float.Parse(parts[1]);
+            float z = float.Parse(parts[2]);
+            return new OpenTK.Mathematics.Vector3(x, y, z);
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool FreeConsole();
     }
 }
