@@ -5,6 +5,8 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.Common;
 using OpenTK.Mathematics;
+using Silk.NET.OpenXR;
+using Silk.NET.Core.Contexts;
 
 namespace SteveEngine
 {
@@ -28,7 +30,9 @@ namespace SteveEngine
         // Add this property to expose the InputManager
         public InputManager Input => inputManager;
 
-        public Engine(Vector3 cameraPosition, int width = 800, int height = 600, string title = "SteveEngine", WindowState state = WindowState.Normal)
+        public bool XREnabled = false;
+
+        public Engine(Vector3 cameraPosition, int width = 800, int height = 600, string title = "SteveEngine", WindowState state = WindowState.Normal, bool isXR = false)
         {
             var nativeWindowSettings = new NativeWindowSettings
             {
@@ -38,12 +42,17 @@ namespace SteveEngine
             };
 
             window = new GameWindow(GameWindowSettings.Default, nativeWindowSettings);
-            camera = new Camera(cameraPosition, width, height);
+            camera = new Camera(cameraPosition, width, height); 
             renderer = new Renderer();
             resourceManager = new ResourceManager();
             
             InitializeLua();
             SetupEvents();
+
+            if (isXR)
+            {
+
+            }
         }
 
         private void InitializeLua()
@@ -171,7 +180,10 @@ namespace SteveEngine
                 obj.Update((float)e.Time);
             }
 
-            camera.Update((float)e.Time);
+            if (camera != null)
+            {
+                camera.Update((float)e.Time);
+            }
         }
 
         private float physicsAccumulator = 0f;
@@ -189,7 +201,6 @@ namespace SteveEngine
         private void OnResize(ResizeEventArgs e)
         {
             GL.Viewport(0, 0, e.Width, e.Height);
-            camera.AspectRatio = e.Width / (float)e.Height;
         }
         
         public void Run()

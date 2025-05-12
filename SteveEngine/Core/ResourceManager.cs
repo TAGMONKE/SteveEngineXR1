@@ -9,6 +9,26 @@ namespace SteveEngine
     {
         private Dictionary<string, Shader> shaders = new Dictionary<string, Shader>();
         private Dictionary<string, Texture> textures = new Dictionary<string, Texture>();
+        private Dictionary<string, AssetBundle> loadedBundles = new Dictionary<string, AssetBundle>();
+
+        public void LoadAssetBundle(string bundlePath)
+        {
+            if (!loadedBundles.ContainsKey(bundlePath))
+            {
+                var bundle = new AssetBundle(bundlePath);
+                loadedBundles[bundlePath] = bundle;
+            }
+        }
+
+        public T GetAssetFromBundle<T>(string bundlePath, string assetName) where T : class
+        {
+            if (loadedBundles.TryGetValue(bundlePath, out var bundle))
+            {
+                return bundle.GetAsset<T>(assetName);
+            }
+
+            throw new KeyNotFoundException($"Asset bundle not loaded: {bundlePath}");
+        }
 
         public Shader LoadShader(string name, string vertexPath, string fragmentPath)
         {

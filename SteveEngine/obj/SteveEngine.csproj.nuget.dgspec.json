@@ -64,7 +64,11 @@
             },
             "OpenTK": {
               "target": "Package",
-              "version": "[4.7.5, )"
+              "version": "[4.9.4, )"
+            },
+            "Silk.NET.OpenXR": {
+              "target": "Package",
+              "version": "[2.22.0, )"
             },
             "SimplerConfig": {
               "target": "Package",

@@ -87,7 +87,17 @@ namespace SteveEngine
         public Vector3 Position { get; set; } = Vector3.Zero;
         public Vector3 Rotation { get; set; } = Vector3.Zero;
         public Vector3 Scale { get; set; } = Vector3.One;
-        
+
+        public Vector3 Forward => Vector3.Normalize(new Vector3(
+            MathF.Cos(Rotation.Y) * MathF.Cos(Rotation.X),
+            MathF.Sin(Rotation.X),
+            MathF.Sin(Rotation.Y) * MathF.Cos(Rotation.X)
+        ));
+
+        public Vector3 Right => Vector3.Normalize(Vector3.Cross(Forward, Vector3.UnitY));
+
+        public Vector3 Up => Vector3.Normalize(Vector3.Cross(Right, Forward));
+
         public Matrix4 GetModelMatrix()
         {
             var model = Matrix4.CreateScale(Scale);

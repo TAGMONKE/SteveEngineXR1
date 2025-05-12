@@ -22,7 +22,11 @@ namespace SteveEngine
             public float CameraYaw { get; set; } = -90.0f;
             public float CameraPitch { get; set; } = 0;
             public bool DebugMode = true;
+            public bool isXR = false;
         }
+
+        public static Engine engine;
+
         [DllImport("user32.dll")]
         private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
@@ -32,6 +36,8 @@ namespace SteveEngine
         static extern IntPtr GetConsoleWindow();
 
         const int SW_SHOW = 5;
+
+        public static bool forceXR = false;
 
         static void Main(string[] args)
         {
@@ -62,7 +68,7 @@ namespace SteveEngine
                 }
                 Console.WriteLine($"Loaded configuration: {config.WindowTitle}, {config.WindowWidth}x{config.WindowHeight}");
 
-                var engine = new SteveEngine.Engine(StrToV3(config.CameraPosition), config.WindowWidth, config.WindowHeight, config.WindowTitle, config.State);
+                engine = new SteveEngine.Engine(StrToV3(config.CameraPosition), config.WindowWidth, config.WindowHeight, config.WindowTitle, config.State, config.isXR || forceXR);
                 Console.WriteLine("Engine created successfully");
 
                 if(!config.DebugMode)
