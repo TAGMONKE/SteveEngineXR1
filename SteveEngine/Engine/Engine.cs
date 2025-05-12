@@ -7,6 +7,7 @@ using OpenTK.Windowing.Common;
 using OpenTK.Mathematics;
 using Silk.NET.OpenXR;
 using Silk.NET.Core.Contexts;
+using System.Collections;
 
 namespace SteveEngine
 {
@@ -32,17 +33,22 @@ namespace SteveEngine
 
         public bool XREnabled = false;
 
-        public Engine(Vector3 cameraPosition, int width = 800, int height = 600, string title = "SteveEngine", WindowState state = WindowState.Normal, bool isXR = false)
+        public bool bp;
+        public bool wp;
+
+        public Engine(Vector3 cameraPosition, int width = 800, int height = 600, string title = "SteveEngine", WindowState state = WindowState.Normal, bool isXR = false, bool basePlate = false, bool wasdPlayer = false, bool VSync = false)
         {
             var nativeWindowSettings = new NativeWindowSettings
             {
                 Size = new Vector2i(width, height),
                 Title = title,
                 WindowState = state,
+                Vsync = VSync ? VSyncMode.On : VSyncMode.Off,
             };
 
             window = new GameWindow(GameWindowSettings.Default, nativeWindowSettings);
-            camera = new Camera(cameraPosition, width, height); 
+            camera = new Camera(cameraPosition, width, height);
+            AudioListener.GetInstance(camera);
             renderer = new Renderer();
             resourceManager = new ResourceManager();
             
@@ -53,6 +59,8 @@ namespace SteveEngine
             {
 
             }
+            bp = basePlate;
+            wp = wasdPlayer;
         }
 
         private void InitializeLua()
@@ -138,6 +146,24 @@ namespace SteveEngine
             for (int i = 0; i < gameObjects.Count; i++)
             {
                 Console.WriteLine($"  Object {i}: {gameObjects[i].Name}");
+            }
+
+
+            if (bp)
+            {
+                // spawn baseplate
+                var baseplate = CreateGameObject("Baseplate");
+                var meshRenderer = baseplate.AddComponent("MeshRenderer");
+                meshRenderer.GameObject.Transform.Scale = new Vector3(100, 1, 100);
+            }
+
+            if (wp)
+            {
+                // spawn player
+                var player = CreateGameObject("Player");
+                var meshRenderer = player.AddComponent("CharacterController");
+                meshRenderer.GameObject.Transform.Scale = new Vector3(1, 2, 1);
+                player.AddComponent("PlayerController");
             }
         }
 

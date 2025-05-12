@@ -19,12 +19,12 @@ function onStart()
         print('Failed to load texture')
     end
 
-    if not addComponentsToCube(cube, material) then
+    if not addComponentsToCube(cube, material, true) then
         return
     end
 end
 
-function addComponentsToCube(cube, material, setMesh)
+function addComponentsToCube(cube, material, addRigid, setMesh)
     print('Adding components to cube...')
     local meshRenderer = cube:AddComponent('MeshRenderer')
     if not meshRenderer then
@@ -38,12 +38,13 @@ function addComponentsToCube(cube, material, setMesh)
         return false
     end
 
-    local rb = cube:AddComponent('Rigidbody')
-    if not rb then
-        print('Failed to create Rigidbody component')
-        return false
+    if addRigid then
+        local rb = cube:AddComponent('Rigidbody')
+        if not rb then
+            print('Failed to create Rigidbody component')
+            return false
+        end
     end
-
 
     if setMesh ~= false then
         print('Creating cube mesh...')
@@ -57,8 +58,6 @@ function addComponentsToCube(cube, material, setMesh)
             return false
         end
     end
-
-    rb:AddForceXYZ(0, 10, 0, 0)
 
     return true
 end

@@ -5,10 +5,10 @@ namespace SteveEngine
 {
     public class Camera
     {
-        private Vector3 position;
-        private Vector3 front = -Vector3.UnitZ;
-        private Vector3 up = Vector3.UnitY;
-        private Vector3 right = Vector3.UnitX;
+        public Vector3 position;
+        public Vector3 front = -Vector3.UnitZ;
+        public Vector3 up = Vector3.UnitY;
+        public Vector3 right = Vector3.UnitX;
         
         private float yaw = -90.0f;
         private float pitch = 0.0f;

@@ -23,6 +23,7 @@ namespace SteveEngine
             public float CameraPitch { get; set; } = 0;
             public bool DebugMode = true;
             public bool isXR = false;
+            public bool VSync = false;
         }
 
         public static Engine engine;
@@ -68,7 +69,7 @@ namespace SteveEngine
                 }
                 Console.WriteLine($"Loaded configuration: {config.WindowTitle}, {config.WindowWidth}x{config.WindowHeight}");
 
-                engine = new SteveEngine.Engine(StrToV3(config.CameraPosition), config.WindowWidth, config.WindowHeight, config.WindowTitle, config.State, config.isXR || forceXR);
+                engine = new SteveEngine.Engine(StrToV3(config.CameraPosition), config.WindowWidth, config.WindowHeight, config.WindowTitle, config.State, config.isXR || forceXR, false, false, false);
                 Console.WriteLine("Engine created successfully");
 
                 if(!config.DebugMode)

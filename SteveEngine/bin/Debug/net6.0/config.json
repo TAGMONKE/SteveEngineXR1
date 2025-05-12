@@ -6,5 +6,7 @@
   "CameraPosition": "0, 0, 0",
   "CameraFov": 70.0,
   "CameraYaw": -70.0,
-  "CameraPitch": -30
+  "CameraPitch": -30,
+  "DebugMode": true,
+  "isXR": false
 }
