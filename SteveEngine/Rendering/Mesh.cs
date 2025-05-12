@@ -44,7 +44,7 @@ namespace SteveEngine
         public void Draw()
         {
             GL.BindVertexArray(vao);
-            GL.DrawElements(PrimitiveType.Triangles, vertexCount, DrawElementsType.UnsignedInt, 0);
+            GL.DrawElements(OpenTK.Graphics.OpenGL4.PrimitiveType.Triangles, vertexCount, DrawElementsType.UnsignedInt, 0);
             GL.BindVertexArray(0);
         }
         

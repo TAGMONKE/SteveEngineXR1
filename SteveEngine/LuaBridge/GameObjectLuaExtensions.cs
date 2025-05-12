@@ -28,6 +28,25 @@ namespace SteveEngine
             return gameObject.Transform.Position;
         }
 
+        public static void MoveBy(this GameObject gameObject, Vector3 offset)
+        {
+            gameObject.Transform.Position += offset;
+        }
+
+        public static void AddForce(this GameObject gameObject, Vector3 force, ForceMode mode = ForceMode.Force)
+        {
+            var rb = gameObject.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.AddForce(force, mode);
+            }
+        }
+
+        public static void LookAt(this GameObject gameObject, Vector3 target)
+        {
+            // Implementation to rotate object toward target
+        }
+
         public static void SetRotation(this GameObject gameObject, float x, float y, float z)
         {
             if (gameObject?.Transform == null)

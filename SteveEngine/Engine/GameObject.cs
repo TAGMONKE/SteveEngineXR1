@@ -64,8 +64,24 @@ namespace SteveEngine
                 return null;
             }
         }
+
+        public T GetComponent<T>() where T : Component
+        {
+            foreach (var component in Components)
+            {
+                if (component is T typedComponent)
+                    return typedComponent;
+            }
+            return null;
+        }
+
+        public bool HasComponent<T>() where T : Component
+        {
+            return GetComponent<T>() != null;
+        }
+
     }
-    
+
     public class Transform
     {
         public Vector3 Position { get; set; } = Vector3.Zero;

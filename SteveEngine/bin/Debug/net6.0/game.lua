@@ -58,7 +58,7 @@ function addComponentsToCube(cube, material, setMesh)
         end
     end
 
-    rb:AddForceXYZ(0, 10, 0)
+    rb:AddForceXYZ(0, 10, 0, 0)
 
     return true
 end
