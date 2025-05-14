@@ -143,7 +143,7 @@ namespace SteveEngine
             lua.DoString(@"
                         Camera = {}
 
-                        function Camera.GetPosition()
+                        function Camera.GetCPosition()
                             if not engine or not engine.Camera then
                                 print('Engine or Camera not available')
                                 return nil
@@ -160,7 +160,7 @@ namespace SteveEngine
                             engine.Camera:SetPosition(Vector3(x, y, z))
                         end
 
-                        function Camera.GetRotation()
+                        function Camera.GetCRotation()
                             if not engine or not engine.Camera then
                                 print('Engine or Camera not available')
                                 return nil
@@ -176,6 +176,44 @@ namespace SteveEngine
                             end
                             engine.Camera:SetRotation(Vector3(x, y, z))
                         end
+
+                        function Camera.MoveForward(dist)
+                            if not engine or not engine.Camera then
+                                print('Engine or Camera not available')
+                                return
+                            end
+                            engine.Camera:MoveForward(dist)
+                        end
+
+                        function Camera.MoveRight(dist)
+                            if not engine or not engine.Camera then
+                                print('Engine or Camera not available')
+                                return
+                            end
+                            engine.Camera:MoveRight(dist)
+                        end
+                        function Camera.MoveUp(dist)
+                            if not engine or not engine.Camera then
+                                print('Engine or Camera not available')
+                                return
+                            end
+                            engine.Camera:MoveUp(dist)
+                        end
+                        function Camera.RotateRight(dist)
+                            if not engine or not engine.Camera then
+                                print('Engine or Camera not available')
+                                return
+                            end
+                            engine.Camera:RotateRight(dist)
+                        end
+                        function Camera.RotateUp(dist)
+                            if not engine or not engine.Camera then
+                                print('Engine or Camera not available')
+                                return
+                            end
+                            engine.Camera:RotateUp(dist)
+                        end
+
                     ");
 
             // Register Time bindings for physics and gameplay timing
@@ -251,7 +289,7 @@ namespace SteveEngine
                             return self.IsKinematic
                         end
                         
-                        function Rigidbody:SetIsKinematic(value)
+                        function Rigidbody.SetIsKinematic(value)
                             self.IsKinematic = value
                         end
                         

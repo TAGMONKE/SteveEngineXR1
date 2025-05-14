@@ -1,3 +1,5 @@
+local didJustSpawnObj = false
+
 function onStart()
     print('SteveEngine game started!')
 
@@ -18,7 +20,7 @@ function onStart()
     else
         print('Failed to load texture')
     end
-
+    
     if not addComponentsToCube(cube, material, true) then
         return
     end
@@ -36,15 +38,20 @@ function addComponentsToCube(cube, material, addRigid, setMesh)
     if not col then
         print('Failed to create Collider component')
         return false
+    else
+        print("Collider created successfully")
     end
+
 
     if addRigid then
         local rb = cube:AddComponent('Rigidbody')
         if not rb then
             print('Failed to create Rigidbody component')
             return false
+        else
+
         end
-    end
+        end
 
     if setMesh ~= false then
         print('Creating cube mesh...')
@@ -63,17 +70,61 @@ function addComponentsToCube(cube, material, addRigid, setMesh)
 end
 
 function onUpdate(deltaTime)
-    local count = GetGameObjectCount()
-    if count > 0 then
-        local cube = GetGameObject(1)
-        if cube and cube.Transform and cube.Transform.Rotation then
-            cube.Transform.Rotation.X = cube.Transform.Rotation.X + deltaTime
-            cube.Transform.Rotation.Y = cube.Transform.Rotation.Y + deltaTime * 2
-        end
-    end
-
+    -- Update the camera position and rotation based on input
     if Input.IsKeyDown(Keys.W) then
-        print("hello, world!")
+        Camera.MoveForward(0.005)
     end
+    if Input.IsKeyDown(Keys.S) then
+        Camera.MoveForward(-0.005)
+    end
+    if Input.IsKeyDown(Keys.A) then
+        Camera.MoveRight(-0.005)
+    end
+    if Input.IsKeyDown(Keys.D) then
+        Camera.MoveRight(0.005)
+    end
+    if Input.IsKeyDown(Keys.Q) then
+        Camera.MoveUp(-0.005)
+    end
+    if Input.IsKeyDown(Keys.E) then
+        Camera.MoveUp(0.005)
+    end
+    if Input.IsKeyDown(Keys.Left) then
+        Camera.RotateRight(-0.05)
+    end
+    if Input.IsKeyDown(Keys.Right) then
+        Camera.RotateRight(0.05)
+    end
+    if Input.IsKeyDown(Keys.Up) then
+        Camera.RotateUp(0.05)
+    end
+    if Input.IsKeyDown(Keys.Down) then
+        Camera.RotateUp(-0.05)
+    end
+    if Input.IsKeyDown(Keys.Space) then
+        if not didJustSpawnObj then
+            print('Spawning new cube without Rigidbody...')
+            local newCube = engine:CreateGameObject('Cube')
+            newCube:SetPosition(0, -12, 0)
 
+            local material = engine:CreateMaterial('default')
+            if material then
+                local texture = engine:LoadTexture("default")
+                if texture then
+                    material:SetTexture('diffuseTexture', texture)
+                end
+            end
+
+            -- Add components: MeshRenderer, Collider (no Rigidbody)
+            if addComponentsToCube(newCube, material, false, true) then
+                print('New cube spawned successfully')
+            else
+                print('Failed to spawn new cube')
+            end
+
+            didJustSpawnObj = true
+        end
+    else
+        didJustSpawnObj = false
+    end
 end

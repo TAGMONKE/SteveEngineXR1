@@ -1,116 +1,131 @@
+using System;
 using System.Collections.Generic;
+using OpenTK.Windowing.Common;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using OpenTK.Mathematics;
+using OpenTK.Windowing.Desktop;
 
 namespace SteveEngine
 {
-    public class InputManager
+    public class InputManager : IDisposable
     {
-        private Dictionary<Keys, bool> keyStates = new Dictionary<Keys, bool>();
-        private Dictionary<Keys, bool> previousKeyStates = new Dictionary<Keys, bool>();
-        
-        private Dictionary<MouseButton, bool> mouseButtonStates = new Dictionary<MouseButton, bool>();
-        private Dictionary<MouseButton, bool> previousMouseButtonStates = new Dictionary<MouseButton, bool>();
-        
-        private Vector2 mousePosition = Vector2.Zero;
-        private Vector2 previousMousePosition = Vector2.Zero;
-        private Vector2 mouseDelta = Vector2.Zero;
-        
-        public InputManager()
+        private readonly GameWindow _window;
+
+        // Key and mouse states
+        private readonly HashSet<Keys> _keysDown = new HashSet<Keys>();
+        private readonly HashSet<Keys> _keysPressedThisFrame = new HashSet<Keys>();
+        private readonly HashSet<Keys> _keysReleasedThisFrame = new HashSet<Keys>();
+
+        private readonly HashSet<MouseButton> _mouseDown = new HashSet<MouseButton>();
+        private readonly HashSet<MouseButton> _mousePressedThisFrame = new HashSet<MouseButton>();
+        private readonly HashSet<MouseButton> _mouseReleasedThisFrame = new HashSet<MouseButton>();
+
+        // Mouse movement and scroll
+        public Vector2 MousePosition { get; private set; }
+        public Vector2 MouseDelta { get; private set; }
+        public float ScrollDelta { get; private set; }
+
+        public InputManager(GameWindow window)
         {
-            // Initialize dictionaries with all keys and mouse buttons set to "not pressed"
-            foreach (Keys key in System.Enum.GetValues(typeof(Keys)))
-            {
-                keyStates[key] = false;
-                previousKeyStates[key] = false;
-            }
-            
-            foreach (MouseButton button in System.Enum.GetValues(typeof(MouseButton)))
-            {
-                mouseButtonStates[button] = false;
-                previousMouseButtonStates[button] = false;
-            }
+            _window = window ?? throw new ArgumentNullException(nameof(window));
+            HookEvents();
         }
 
-        public void Update(KeyboardState keyboardState, MouseState mouseState)
+        private void HookEvents()
         {
-            // Update previous states
-            previousKeyStates = new Dictionary<Keys, bool>(keyStates);
-            previousMouseButtonStates = new Dictionary<MouseButton, bool>(mouseButtonStates);
-            previousMousePosition = mousePosition;
-
-            // Update current keyboard state
-            foreach (Keys key in System.Enum.GetValues(typeof(Keys)))
-            {
-                try
-                {
-                    keyStates[key] = keyboardState.IsKeyDown(key);
-                }
-                catch
-                {
-                    // Skip keys that are out of range
-                    keyStates[key] = false;
-                }
-            }
-
-            // Update current mouse state
-            foreach (MouseButton button in System.Enum.GetValues(typeof(MouseButton)))
-            {
-                try
-                {
-                    mouseButtonStates[button] = mouseState.IsButtonDown(button);
-                }
-                catch
-                {
-                    // Skip mouse buttons that are out of range
-                    mouseButtonStates[button] = false;
-                }
-            }
-
-            // Update mouse position and delta
-            mousePosition = new Vector2(mouseState.X, mouseState.Y);
-            mouseDelta = mousePosition - previousMousePosition;
+            _window.KeyDown += OnKeyDown;
+            _window.KeyUp += OnKeyUp;
+            _window.MouseDown += OnMouseDown;
+            _window.MouseUp += OnMouseUp;
+            _window.MouseMove += OnMouseMove;
+            _window.MouseWheel += OnMouseWheel;
+            _window.UpdateFrame += OnUpdateFrame;
         }
 
+        private void OnKeyDown(KeyboardKeyEventArgs e)
+        {
+            // If first time down this frame
+            if (_keysDown.Add(e.Key))
+                _keysPressedThisFrame.Add(e.Key);
+        }
 
-        public bool IsKeyPressed(Keys key)
+        private void OnKeyUp(KeyboardKeyEventArgs e)
         {
-            return keyStates[key] && !previousKeyStates[key];
+            if (_keysDown.Remove(e.Key))
+                _keysReleasedThisFrame.Add(e.Key);
         }
-        
-        public bool IsKeyDown(Keys key)
+
+        private void OnMouseDown(MouseButtonEventArgs e)
         {
-            return keyStates[key];
+            if (_mouseDown.Add(e.Button))
+                _mousePressedThisFrame.Add(e.Button);
         }
-        
-        public bool IsKeyReleased(Keys key)
+
+        private void OnMouseUp(MouseButtonEventArgs e)
         {
-            return !keyStates[key] && previousKeyStates[key];
+            if (_mouseDown.Remove(e.Button))
+                _mouseReleasedThisFrame.Add(e.Button);
         }
-        
-        public bool IsMouseButtonPressed(MouseButton button)
+
+        private Vector2 _lastMousePosition;
+        private void OnMouseMove(MouseMoveEventArgs e)
         {
-            return mouseButtonStates[button] && !previousMouseButtonStates[button];
+            var newPos = new Vector2(e.X, e.Y);
+            MouseDelta = newPos - _lastMousePosition;
+            MousePosition = newPos;
+            _lastMousePosition = newPos;
         }
-        
-        public bool IsMouseButtonDown(MouseButton button)
+
+        private void OnMouseWheel(MouseWheelEventArgs e)
         {
-            return mouseButtonStates[button];
+            ScrollDelta += e.OffsetY;
         }
-        
-        public bool IsMouseButtonReleased(MouseButton button)
+
+        private void OnUpdateFrame(FrameEventArgs e)
         {
-            return !mouseButtonStates[button] && previousMouseButtonStates[button];
+            // Clear per-frame state at the end of update
+            _keysPressedThisFrame.Clear();
+            _keysReleasedThisFrame.Clear();
+
+            _mousePressedThisFrame.Clear();
+            _mouseReleasedThisFrame.Clear();
+
+            ScrollDelta = 0;
+            MouseDelta = Vector2.Zero;
         }
-        
-        public Vector2 GetMousePosition()
+
+        // Query methods
+        public bool IsKeyDown(Keys key) => _keysDown.Contains(key);
+        public bool IsKeyPressed(Keys key) => _keysPressedThisFrame.Contains(key);
+        public bool IsKeyReleased(Keys key) => _keysReleasedThisFrame.Contains(key);
+
+        public bool IsAnyKeyDown(params Keys[] keys)
         {
-            return mousePosition;
+            foreach (var k in keys)
+                if (IsKeyDown(k)) return true;
+            return false;
         }
-        
-        public Vector2 GetMouseDelta()
+
+        public bool AreAllKeysDown(params Keys[] keys)
         {
-            return mouseDelta;
+            foreach (var k in keys)
+                if (!IsKeyDown(k)) return false;
+            return keys.Length > 0;
+        }
+
+        public bool IsMouseButtonDown(MouseButton button) => _mouseDown.Contains(button);
+        public bool IsMouseButtonPressed(MouseButton button) => _mousePressedThisFrame.Contains(button);
+        public bool IsMouseButtonReleased(MouseButton button) => _mouseReleasedThisFrame.Contains(button);
+
+        public void Dispose()
+        {
+            _window.KeyDown -= OnKeyDown;
+            _window.KeyUp -= OnKeyUp;
+            _window.MouseDown -= OnMouseDown;
+            _window.MouseUp -= OnMouseUp;
+            _window.MouseMove -= OnMouseMove;
+            _window.MouseWheel -= OnMouseWheel;
+            _window.UpdateFrame -= OnUpdateFrame;
         }
     }
 }

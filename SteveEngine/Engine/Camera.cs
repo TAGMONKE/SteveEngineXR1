@@ -99,7 +99,29 @@ namespace SteveEngine
         {
             position += up * distance;
         }
-        
+
+        public void RotateRight(float angle)
+        {
+            yaw += angle;
+            UpdateVectors();
+        }
+
+        public void RotateUp(float angle)
+        {
+            pitch += angle;
+            UpdateVectors();
+        }
+
+        public Vector3 GetPosition()
+        {
+            return Position;
+        }
+
+        public void SetPosition(Vector3 pos)
+        {
+            Position = pos;
+        }
+
         public void Update(float deltaTime)
         {
             // Camera logic to be implemented or overridden via Lua

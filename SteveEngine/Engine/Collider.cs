@@ -56,15 +56,24 @@ namespace SteveEngine
         // Constructor for different collider types
         public Collider() : this(ColliderType.Box) { }
 
+        public static List<Collider> AllColliders = new();
+
         public Collider(ColliderType type)
         {
             Type = type;
+            AllColliders.Add(this);
         }
 
         public override void Update(float deltaTime)
         {
-            // Physics engines typically handle collision detection in a separate system
-            // rather than in the Update method of individual colliders
+            // add stuff
+            foreach (var other in AllColliders)
+            {
+                if (other != this && Intersects(other))
+                {
+                    ResolveCollision(other, deltaTime);
+                }
+            }
         }
 
         // Get the world bounds of this collider
@@ -291,122 +300,51 @@ namespace SteveEngine
             return true;
         }
 
-        // Calculate more accurate collision response
         public void ResolveCollision(Collider other, float deltaTime)
         {
-            if (IsTrigger || other.IsTrigger)
-                return; // Triggers don't have physical responses
+            Rigidbody rbA = this.AttachedRigidbody;
+            Rigidbody rbB = other.AttachedRigidbody;
 
-            if (AttachedRigidbody == null || other.AttachedRigidbody == null)
-                return; // Need rigidbodies to resolve collisions
-
-            // Get collision details based on collider types
-            Vector3 normal;
-            float penetration;
-            bool collided = false;
-
-            if (Type == ColliderType.Sphere && other.Type == ColliderType.Sphere)
-            {
-                collided = SphereSphereColl(this, other, out normal, out penetration);
-            }
-            else if (Type == ColliderType.Box && other.Type == ColliderType.Box)
-            {
-                collided = BoxBoxColl(this, other, out normal, out penetration);
-            }
-            else if (Type == ColliderType.Sphere && other.Type == ColliderType.Box)
-            {
-                collided = SphereBoxColl(this, other, out normal, out penetration);
-                // Reverse normal since sphere is the first parameter
-                normal = -normal;
-            }
-            else if (Type == ColliderType.Box && other.Type == ColliderType.Sphere)
-            {
-                collided = SphereBoxColl(other, this, out normal, out penetration);
-            }
-            else
-            {
-                // Simplified fallback for other combinations
-                Vector3 posA = GameObject.Transform.Position + Center;
-                Vector3 posB = other.GameObject.Transform.Position + other.Center;
-                normal = Vector3.Normalize(posB - posA);
-                penetration = 0.1f; // Default penetration
-                collided = true;
-            }
-
-            if (!collided)
+            if (rbA == null || rbB == null)
                 return;
 
-            // Position correction to resolve penetration
-            float totalMass = AttachedRigidbody.Mass + other.AttachedRigidbody.Mass;
-            float ratioA = AttachedRigidbody.IsKinematic ? 0 : other.AttachedRigidbody.Mass / totalMass;
-            float ratioB = other.AttachedRigidbody.IsKinematic ? 0 : AttachedRigidbody.Mass / totalMass;
+            Vector3 normal = GetCollisionNormalWith(other); // You'll need to compute this
+            float restitution = 0.5f; // Bounciness, 0 = no bounce, 1 = full bounce
 
-            // Adjust penetration resolution strength
-            float resolutionFactor = 0.8f;
+            // Relative velocity
+            Vector3 relativeVelocity = rbB.Velocity - rbA.Velocity;
+            float velAlongNormal = Vector3.Dot(relativeVelocity, normal);
 
-            // Apply position correction if not kinematic
-            if (!AttachedRigidbody.IsKinematic)
-                GameObject.Transform.Position -= normal * penetration * ratioA * resolutionFactor;
-
-            if (!other.AttachedRigidbody.IsKinematic)
-                other.GameObject.Transform.Position += normal * penetration * ratioB * resolutionFactor;
-
-            // Velocity response (improved elastic collision)
-            Vector3 relativeVelocity = other.AttachedRigidbody.Velocity - AttachedRigidbody.Velocity;
-            float velocityAlongNormal = Vector3.Dot(relativeVelocity, normal);
-
-            // Only respond if objects are moving toward each other
-            if (velocityAlongNormal > 0)
+            // Only resolve if they are moving toward each other
+            if (velAlongNormal > 0)
                 return;
 
-            // Restitution (bounciness) - a value between 0 and 1
-            float restitution = 0.6f;
+            // Calculate impulse scalar
+            float invMassA = 1.0f / rbA.Mass;
+            float invMassB = 1.0f / rbB.Mass;
 
-            // Calculate impulse scalar with improved formula
-            float inverseMassA = AttachedRigidbody.IsKinematic ? 0 : 1 / AttachedRigidbody.Mass;
-            float inverseMassB = other.AttachedRigidbody.IsKinematic ? 0 : 1 / other.AttachedRigidbody.Mass;
+            float j = -(1 + restitution) * velAlongNormal;
+            j /= invMassA + invMassB;
 
-            // Avoid division by zero
-            if (inverseMassA == 0 && inverseMassB == 0)
-                return;
-
-            float j = -(1 + restitution) * velocityAlongNormal;
-            j /= inverseMassA + inverseMassB;
+            Vector3 impulse = j * normal;
 
             // Apply impulse
-            Vector3 impulse = j * normal;
-            if (!AttachedRigidbody.IsKinematic)
-                AttachedRigidbody.AddForce(-impulse, ForceMode.Impulse);
+            rbA.Velocity -= impulse * invMassA;
+            rbB.Velocity += impulse * invMassB;
 
-            if (!other.AttachedRigidbody.IsKinematic)
-                other.AttachedRigidbody.AddForce(impulse, ForceMode.Impulse);
+            // Optional: positional correction to avoid sinking
+            const float percent = 0.2f; // Penetration correction percentage
+            const float slop = 0.01f;   // Small threshold to ignore tiny penetrations
+            float penetrationDepth = GetPenetrationDepthWith(other); // Implement this
 
-            // Apply friction
-            const float frictionCoefficient = 0.3f;
-
-            // Calculate tangent vector
-            Vector3 tangent = relativeVelocity - velocityAlongNormal * normal;
-            float tangentLength = tangent.Length;
-
-            // Only apply friction if there's a tangential component
-            if (tangentLength > 0.001f)
+            if (penetrationDepth > slop)
             {
-                tangent = Vector3.Normalize(tangent);
-
-                // Calculate friction impulse
-                float frictionImpulse = -Vector3.Dot(relativeVelocity, tangent);
-                frictionImpulse /= inverseMassA + inverseMassB;
-                frictionImpulse *= frictionCoefficient;
-
-                // Apply friction impulse
-                Vector3 frictionForce = frictionImpulse * tangent;
-                if (!AttachedRigidbody.IsKinematic)
-                    AttachedRigidbody.AddForce(-frictionForce, ForceMode.Impulse);
-
-                if (!other.AttachedRigidbody.IsKinematic)
-                    other.AttachedRigidbody.AddForce(frictionForce, ForceMode.Impulse);
+                Vector3 correction = (penetrationDepth - slop) / (invMassA + invMassB) * percent * normal;
+                rbA.GameObject.Transform.Position -= correction * invMassA;
+                rbB.GameObject.Transform.Position += correction * invMassB;
             }
         }
+
 
         // Event methods
         protected virtual void OnCollisionEnter(Collider other)
@@ -418,6 +356,73 @@ namespace SteveEngine
         protected virtual void OnCollisionExit(Collider other)
         {
             Console.WriteLine($"Collision exit between {GameObject.Name} and {other.GameObject.Name}");
+        }
+
+        // Add the missing method GetCollisionNormalWith to the Collider class.  
+        private Vector3 GetCollisionNormalWith(Collider other)
+        {
+            Vector3 normal = Vector3.Zero;
+
+            // Simplified logic to calculate collision normal based on collider types.  
+            if (Type == ColliderType.Sphere && other.Type == ColliderType.Sphere)
+            {
+                Vector3 direction = other.GetWorldCenter() - GetWorldCenter();
+                normal = direction.Normalized();
+            }
+            else if (Type == ColliderType.Box && other.Type == ColliderType.Box)
+            {
+                // Use the BoxBoxColl method to calculate the normal.  
+                BoxBoxColl(this, other, out normal, out _);
+            }
+            else if ((Type == ColliderType.Sphere && other.Type == ColliderType.Box) ||
+                     (Type == ColliderType.Box && other.Type == ColliderType.Sphere))
+            {
+                // Use the SphereBoxColl method to calculate the normal.  
+                SphereBoxColl(this, other, out normal, out _);
+            }
+            else
+            {
+                // Default to a zero vector if no specific logic is implemented.  
+                normal = Vector3.Zero;
+            }
+
+            return normal;
+        }
+
+        private float GetPenetrationDepthWith(Collider other)
+        {
+            float penetrationDepth = 0f;
+
+            // Simplified logic to calculate penetration depth based on collider types.
+            if (Type == ColliderType.Sphere && other.Type == ColliderType.Sphere)
+            {
+                Vector3 direction = other.GetWorldCenter() - GetWorldCenter();
+                float distance = direction.Length;
+                float radiiSum = Radius + other.Radius;
+
+                if (distance < radiiSum)
+                {
+                    penetrationDepth = radiiSum - distance;
+                }
+            }
+            else if (Type == ColliderType.Box && other.Type == ColliderType.Box)
+            {
+                // Use the BoxBoxColl method to calculate the penetration depth.
+                BoxBoxColl(this, other, out _, out penetrationDepth);
+            }
+            else if ((Type == ColliderType.Sphere && other.Type == ColliderType.Box) ||
+                     (Type == ColliderType.Box && other.Type == ColliderType.Sphere))
+            {
+                // Use the SphereBoxColl method to calculate the penetration depth.
+                SphereBoxColl(this, other, out _, out penetrationDepth);
+            }
+            else
+            {
+                // Default to zero if no specific logic is implemented.
+                penetrationDepth = 0f;
+            }
+
+            return penetrationDepth;
         }
     }
 }

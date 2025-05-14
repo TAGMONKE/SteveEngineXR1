@@ -78,6 +78,9 @@ namespace SteveEngine
                     ShowWindow(handle, SW_HIDE);
                 }
 
+
+                // Call this after engine.LoadScript(scriptPath);
+                RegisterLuaShaderLoader(engine);
                 // Create shader files
                 Console.WriteLine("Creating shader files...");
                 var defaultShaderVert = @"
@@ -104,42 +107,65 @@ namespace SteveEngine
                 ";
 
                 var defaultShaderFrag = @"
-                    #version 330 core
-                    out vec4 FragColor;
-                    
-                    in vec3 FragPos;
-                    in vec3 Normal;
-                    in vec2 TexCoord;
-                    
-                    uniform sampler2D diffuseTexture;
-                    uniform vec3 lightPos = vec3(1.0, 2.0, 3.0);
-                    uniform vec3 lightColor = vec3(1.0, 1.0, 1.0);
-                    uniform vec3 viewPos = vec3(0.0, 0.0, 3.0);
-                    
-                    void main()
-                    {
-                        // Ambient
-                        float ambientStrength = 0.1;
-                        vec3 ambient = ambientStrength * lightColor;
-                        
-                        // Diffuse
-                        vec3 norm = normalize(Normal);
-                        vec3 lightDir = normalize(lightPos - FragPos);
-                        float diff = max(dot(norm, lightDir), 0.0);
-                        vec3 diffuse = diff * lightColor;
-                        
-                        // Specular
-                        float specularStrength = 0.5;
-                        vec3 viewDir = normalize(viewPos - FragPos);
-                        vec3 reflectDir = reflect(-lightDir, norm);
-                        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-                        vec3 specular = specularStrength * spec * lightColor;
-                        
-                        vec3 result = (ambient + diffuse + specular) * texture(diffuseTexture, TexCoord).rgb;
-                        FragColor = vec4(result, 1.0);
-                    }
-                ";
+    #version 330 core
+    out vec4 FragColor;
+    
+    in vec3 FragPos;
+    in vec3 Normal;
+    in vec2 TexCoord;
+    
+    uniform sampler2D diffuseTexture;
+    uniform sampler2D normalMap;
+    uniform vec3 lightPos = vec3(1.0, 2.0, 3.0);
+    uniform vec3 lightColor = vec3(1.0, 1.0, 1.0);
+    uniform vec3 viewPos = vec3(0.0, 0.0, 3.0);
 
+    // Function to get normal from normal map
+    vec3 GetNormalFromMap()
+    {
+        vec3 tangentNormal = texture(normalMap, TexCoord).rgb * 2.0 - 1.0;
+
+        // Assume model matrix has no non-uniform scale for simplicity
+        vec3 Q1 = dFdx(FragPos);
+        vec3 Q2 = dFdy(FragPos);
+        vec2 st1 = dFdx(TexCoord);
+        vec2 st2 = dFdy(TexCoord);
+
+        vec3 N = normalize(Normal);
+        vec3 T = normalize(Q1 * st2.y - Q2 * st1.y);
+        vec3 B = normalize(cross(N, T));
+        mat3 TBN = mat3(T, B, N);
+
+        return normalize(TBN * tangentNormal);
+    }
+    
+    void main()
+    {
+        // Ambient
+        float ambientStrength = 0.1;
+        vec3 ambient = ambientStrength * lightColor;
+        
+        // Normal mapping
+        vec3 norm = normalize(Normal);
+        if(texture(normalMap, TexCoord).a > 0.0)
+            norm = GetNormalFromMap();
+
+        // Diffuse
+        vec3 lightDir = normalize(lightPos - FragPos);
+        float diff = max(dot(norm, lightDir), 0.0);
+        vec3 diffuse = diff * lightColor;
+        
+        // Specular
+        float specularStrength = 1;
+        vec3 viewDir = normalize(viewPos - FragPos);
+        vec3 reflectDir = reflect(-lightDir, norm);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+        vec3 specular = specularStrength * spec * lightColor;
+        
+        vec3 result = (ambient + diffuse + specular) * texture(diffuseTexture, TexCoord).rgb;
+        FragColor = vec4(result, 1.0);
+    }
+";
                 // Write shaders to temporary files
                 string tempPath = Path.GetTempPath();
                 string vertPath = Path.Combine(tempPath, "default.vert");
@@ -179,8 +205,58 @@ namespace SteveEngine
 
                     bitmap.Save(defaultTexturePath, ImageFormat.Png);
                 }
-
                 Console.WriteLine($"Default texture created at {defaultTexturePath}");
+
+                // create a default normal map for testing
+                Console.WriteLine("Creating default normal map...");
+                string defaultNormalMapPath = Path.Combine(tempPath, "default_normal.png");
+                using (var sourceTexture = new Bitmap(defaultTexturePath))
+                using (var normalMap = new Bitmap(sourceTexture.Width, sourceTexture.Height))
+                {
+                    // Strength of the normal map effect
+                    float strength = 2.0f;
+
+                    for (int x = 0; x < normalMap.Width; x++)
+                    {
+                        for (int y = 0; y < normalMap.Height; y++)
+                        {
+                            // Sample neighboring pixels
+                            int left = Math.Max(0, x - 1);
+                            int right = Math.Min(sourceTexture.Width - 1, x + 1);
+                            int top = Math.Max(0, y - 1);
+                            int bottom = Math.Min(sourceTexture.Height - 1, y + 1);
+
+                            // Get grayscale values of neighboring pixels
+                            float leftVal = sourceTexture.GetPixel(left, y).GetBrightness();
+                            float rightVal = sourceTexture.GetPixel(right, y).GetBrightness();
+                            float topVal = sourceTexture.GetPixel(x, top).GetBrightness();
+                            float bottomVal = sourceTexture.GetPixel(x, bottom).GetBrightness();
+
+                            // Calculate normal based on gradient
+                            float dx = (rightVal - leftVal) * strength;
+                            float dy = (bottomVal - topVal) * strength;
+
+                            // Calculate normal vector (x, y, z)
+                            Vector3 normal = Vector3.Normalize(new Vector3(-dx, -dy, 1.0f));
+
+                            // Convert from [-1,1] range to [0,1] range for RGB
+                            Vector3 rgb = normal * 0.5f + new Vector3(0.5f, 0.5f, 0.5f);
+
+                            // Convert to color (0-255)
+                            int r = (int)(rgb.X * 255);
+                            int g = (int)(rgb.Y * 255);
+                            int b = (int)(rgb.Z * 255);
+
+                            normalMap.SetPixel(x, y, Color.FromArgb(255, r, g, b));
+                        }
+                    }
+
+                    normalMap.Save(defaultNormalMapPath, ImageFormat.Png);
+                }
+
+                Console.WriteLine($"Default normal map created at {defaultNormalMapPath}");
+
+                Console.WriteLine($"Default normal map created at {defaultNormalMapPath}");
 
                 // Load sample script
                 Console.WriteLine("Creating Lua script...");
@@ -226,5 +302,19 @@ namespace SteveEngine
         [DllImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool FreeConsole();
+
+        public static void RegisterLuaShaderLoader(Engine engine) => engine.luaState.RegisterFunction("load_shader", null, typeof(Program).GetMethod(nameof(LoadShaderFromLua)));
+        public static void LoadShaderFromLua(string name, string vertPath, string fragPath)
+        {
+            if (engine == null)
+                throw new InvalidOperationException("Engine not initialized.");
+
+            if (!File.Exists(vertPath) || !File.Exists(fragPath))
+                throw new FileNotFoundException("Shader file(s) not found.");
+
+            var shader = engine.LoadShader(name, vertPath, fragPath);
+            if (shader == null)
+                throw new Exception("Failed to load shader.");
+        }
     }
 }

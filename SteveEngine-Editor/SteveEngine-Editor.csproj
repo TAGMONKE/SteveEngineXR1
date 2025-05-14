@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<RootNamespace>SteveEngineEditor</RootNamespace>
+		<UseWindowsForms>true</UseWindowsForms>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="OpenTK" Version="4.9.4" />
+		<PackageReference Include="OpenTK.GLWpfControl" Version="4.2.3" />
+		<PackageReference Include="OpenTK.WinForms" Version="4.0.0-pre.7" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\SteveEngine\SteveEngine.csproj" />
+	</ItemGroup>
+
+</Project>

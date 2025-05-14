@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SteveEngine")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4dc5259e4f1c6a91f3fafcb0fd277c35892a4fc7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c4db67f185cd84619e31c8e892ad467bdea66988")]
 [assembly: System.Reflection.AssemblyProductAttribute("SteveEngine")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SteveEngine")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -15,7 +15,7 @@ namespace SteveEngine
     {
         private GameWindow window;
         private Camera camera;
-        private Lua luaState;
+        public Lua luaState;
         private List<GameObject> gameObjects = new List<GameObject>();
         private Renderer renderer;
         private ResourceManager resourceManager;
@@ -35,6 +35,7 @@ namespace SteveEngine
 
         public bool bp;
         public bool wp;
+        public Camera Camera => camera;
 
         public Engine(Vector3 cameraPosition, int width = 800, int height = 600, string title = "SteveEngine", WindowState state = WindowState.Normal, bool isXR = false, bool basePlate = false, bool wasdPlayer = false, bool VSync = false)
         {
@@ -99,16 +100,13 @@ namespace SteveEngine
             window.UpdateFrame += OnUpdateFrame;
             window.RenderFrame += OnRenderFrame;
             window.Resize += OnResize;
-            inputManager = new InputManager();
+            inputManager = new InputManager(window);
 
             window.KeyDown += OnKeyDown;
             window.KeyUp += OnKeyUp;
             window.MouseDown += OnMouseDown;
             window.MouseUp += OnMouseUp;
             window.MouseMove += OnMouseMove;
-
-            inputManager.Update(window.KeyboardState, window.MouseState);
-
         }
 
         private void OnLoad()
