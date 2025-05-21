@@ -21,6 +21,16 @@ namespace SteveEngine
             var viewMatrix = camera.GetViewMatrix();
             var projectionMatrix = camera.GetProjectionMatrix();
 
+            // Update view position for lighting calculations
+            foreach (var material in GetUniqueMaterials(gameObjects))
+            {
+                material.Shader.Use();
+                material.Shader.SetVector3("viewPos", camera.Position);
+                Vector3 lightPos = -Sun.Instance.Direction.Normalized() * 100.0f;
+                material.Shader.SetVector3("lightPos", lightPos);
+                material.Shader.SetVector3("lightColor", Sun.Instance.Color);
+            }
+
             // 1. Group by Material (and optionally Mesh)
             var batches = new Dictionary<Material, List<(MeshRenderer, Matrix4)>>();
 
@@ -54,7 +64,16 @@ namespace SteveEngine
             // Insert fence to track when this frame's rendering completes
             renderFence.Insert();
         }
-
+        private IEnumerable<Material> GetUniqueMaterials(List<GameObject> gameObjects)
+        {
+            var materials = new HashSet<Material>();
+            foreach (var obj in gameObjects)
+            {
+                if (obj.Renderer is MeshRenderer mr && mr.Material != null)
+                    materials.Add(mr.Material);
+            }
+            return materials;
+        }
         public void RenderXR(List<GameObject> gameObjects, Matrix4 leftViewMatrix, Matrix4 leftProjectionMatrix, Matrix4 rightViewMatrix, Matrix4 rightProjectionMatrix)
         {
             // Wait for previous frame to complete if still rendering

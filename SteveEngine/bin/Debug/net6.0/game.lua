@@ -1,4 +1,6 @@
 local didJustSpawnObj = false
+local didJustSpawnObj2 = false
+
 
 function onStart()
     print('SteveEngine game started!')
@@ -21,7 +23,7 @@ function onStart()
         print('Failed to load texture')
     end
     
-    if not addComponentsToCube(cube, material, true) then
+    if not addComponentsToCube(cube, material, true, true) then
         return
     end
 end
@@ -42,19 +44,20 @@ function addComponentsToCube(cube, material, addRigid, setMesh)
         print("Collider created successfully")
     end
 
+    local rb = cube:AddComponent('Rigidbody')
+    if not rb then
+        print('Failed to create Rigidbody component')
+        return false
+    end
 
-    if addRigid then
-        local rb = cube:AddComponent('Rigidbody')
-        if not rb then
-            print('Failed to create Rigidbody component')
-            return false
-        else
+    if not addRigid then
+        rb.IsKinematic = true
+    end
 
-        end
-        end
 
     if setMesh ~= false then
         print('Creating cube mesh...')
+        -- re-write this soon! (or not, whatever floats your boat)
         local cubeMesh = Mesh.CreateCube()
         if cubeMesh then
             print('Cube mesh created successfully')
@@ -105,7 +108,33 @@ function onUpdate(deltaTime)
         if not didJustSpawnObj then
             print('Spawning new cube without Rigidbody...')
             local newCube = engine:CreateGameObject('Cube')
-            newCube:SetPosition(0, -12, 0)
+            newCube:SetPosition(0, 12, 0)
+
+            local material = engine:CreateMaterial('default')
+            if material then
+                local texture = engine:LoadTexture("default")
+                if texture then
+                    material:SetTexture('diffuseTexture', texture)
+                end
+            end
+
+            -- Add components: MeshRenderer, Collider (no Rigidbody)
+            if addComponentsToCube(newCube, material, true, true) then
+                print('New cube spawned successfully')
+            else
+                print('Failed to spawn new cube')
+            end
+
+            didJustSpawnObj = true
+        end
+    else
+        didJustSpawnObj = false
+    end
+    if Input.IsKeyDown(Keys.L) then
+        if not didJustSpawnObj2 then
+            print('Spawning new cube without Rigidbody...')
+            local newCube = engine:CreateGameObject('Cube')
+            newCube:SetPosition(0, 9, 0)
 
             local material = engine:CreateMaterial('default')
             if material then
@@ -122,9 +151,9 @@ function onUpdate(deltaTime)
                 print('Failed to spawn new cube')
             end
 
-            didJustSpawnObj = true
+            didJustSpawnObj2 = true
         end
     else
-        didJustSpawnObj = false
+        didJustSpawnObj2 = false
     end
 end

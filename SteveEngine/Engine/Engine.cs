@@ -8,6 +8,7 @@ using OpenTK.Mathematics;
 using Silk.NET.OpenXR;
 using Silk.NET.Core.Contexts;
 using System.Collections;
+using static OpenTK.Graphics.OpenGL.GL;
 
 namespace SteveEngine
 {
@@ -37,6 +38,8 @@ namespace SteveEngine
         public bool wp;
         public Camera Camera => camera;
 
+        public Sun sun;
+
         public Engine(Vector3 cameraPosition, int width = 800, int height = 600, string title = "SteveEngine", WindowState state = WindowState.Normal, bool isXR = false, bool basePlate = false, bool wasdPlayer = false, bool VSync = false)
         {
             var nativeWindowSettings = new NativeWindowSettings
@@ -46,7 +49,7 @@ namespace SteveEngine
                 WindowState = state,
                 Vsync = VSync ? VSyncMode.On : VSyncMode.Off,
             };
-
+            sun = Sun.Instance;
             window = new GameWindow(GameWindowSettings.Default, nativeWindowSettings);
             camera = new Camera(cameraPosition, width, height);
             AudioListener.GetInstance(camera);

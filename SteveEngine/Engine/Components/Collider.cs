@@ -305,11 +305,11 @@ namespace SteveEngine
             Rigidbody rbA = this.AttachedRigidbody;
             Rigidbody rbB = other.AttachedRigidbody;
 
-            if (rbA == null || rbB == null)
-                return;
+            // Don't automatically zero the other object's velocity
+            // rbB.Velocity = Vector3.Zero; // Removed this line
 
-            Vector3 normal = GetCollisionNormalWith(other); // You'll need to compute this
-            float restitution = 0.5f; // Bounciness, 0 = no bounce, 1 = full bounce
+            Vector3 normal = GetCollisionNormalWith(other); // Direction from A to B
+            float restitution = 0f; // Bounciness, 0 = no bounce, 1 = full bounce
 
             // Relative velocity
             Vector3 relativeVelocity = rbB.Velocity - rbA.Velocity;
@@ -323,6 +323,17 @@ namespace SteveEngine
             float invMassA = 1.0f / rbA.Mass;
             float invMassB = 1.0f / rbB.Mass;
 
+            // Check if either object has infinite mass
+            bool isAStationary = rbA.Mass >= float.MaxValue;
+            bool isBStationary = rbB.Mass >= float.MaxValue;
+
+            if (isAStationary && isBStationary)
+                return; // Both objects are immovable
+
+            // Handle infinite mass objects by zeroing their inverse mass
+            if (isAStationary) invMassA = 0f;
+            if (isBStationary) invMassB = 0f;
+
             float j = -(1 + restitution) * velAlongNormal;
             j /= invMassA + invMassB;
 
@@ -332,16 +343,24 @@ namespace SteveEngine
             rbA.Velocity -= impulse * invMassA;
             rbB.Velocity += impulse * invMassB;
 
-            // Optional: positional correction to avoid sinking
-            const float percent = 0.2f; // Penetration correction percentage
-            const float slop = 0.01f;   // Small threshold to ignore tiny penetrations
-            float penetrationDepth = GetPenetrationDepthWith(other); // Implement this
+            // Positional correction to avoid sinking
+            float penetrationDepth = GetPenetrationDepthWith(other);
 
-            if (penetrationDepth > slop)
+            // Only perform correction if there's actual penetration
+            if (penetrationDepth > 0)
             {
-                Vector3 correction = (penetrationDepth - slop) / (invMassA + invMassB) * percent * normal;
-                rbA.GameObject.Transform.Position -= correction * invMassA;
-                rbB.GameObject.Transform.Position += correction * invMassB;
+                const float percent = 0.2f; // Penetration correction percentage (0.2 to 0.8)
+                const float slop = 0.01f;   // Small threshold to ignore tiny penetrations
+
+                // Only correct if penetration exceeds the slop
+                if (penetrationDepth > slop)
+                {
+                    Vector3 correction = normal * (penetrationDepth - slop) * percent / (invMassA + invMassB);
+
+                    // Apply correction proportional to inverse mass (static objects don't move)
+                    rbA.GameObject.Transform.Position -= correction * invMassA;
+                    rbB.GameObject.Transform.Position += correction * invMassB;
+                }
             }
         }
 

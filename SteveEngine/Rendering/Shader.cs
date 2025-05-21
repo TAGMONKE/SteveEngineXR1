@@ -45,7 +45,10 @@ namespace SteveEngine
             
             return shader;
         }
-        
+
+        /// <summary>
+        /// Use this shader program for rendering.
+        /// </summary>
         public void Use()
         {
             GL.UseProgram(ProgramId);
@@ -73,6 +76,17 @@ namespace SteveEngine
         {
             int location = GL.GetUniformLocation(ProgramId, name);
             GL.UniformMatrix4(location, false, ref value);
+        }
+
+        /// <summary>
+        /// im so stupid I thought this did something
+        /// </summary>
+        /// <param name="name"></param>
+        /// <param name="color"></param>
+        public void SetColor(string name, Color4 color)
+        {
+            int location = GL.GetUniformLocation(ProgramId, name);
+            GL.Uniform4(location, color);
         }
     }
 }

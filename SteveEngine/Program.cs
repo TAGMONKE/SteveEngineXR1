@@ -40,6 +40,10 @@ namespace SteveEngine
 
         public static bool forceXR = false;
 
+        /// <summary>
+        /// Main entry point for the application.
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
             try

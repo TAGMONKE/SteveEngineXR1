@@ -101,6 +101,21 @@ namespace SteveEngine
         function Mesh.CreateCube()
             return MeshFactory:CreateCube()
         end
+        function Mesh.CreateSphere()
+            return MeshFactory:CreateSphere()
+        end
+        function Mesh.CreateCone()
+            return MeshFactory:CreateCone()
+        end
+        function Mesh.CreateCapsule()
+            return MeshFactory:CreateCapsule()
+        end
+        function Mesh.CreateQuad()
+            return MeshFactory:CreateQuad()
+        end
+        function Mesh.CreatePlane()
+            return MeshFactory:CreatePlane()
+        end
     ");
 
             // Add this to your SetupLuaBindings method in LuaBindings.cs, just after the GameObject table definition
@@ -137,6 +152,32 @@ namespace SteveEngine
         return nil
     end
 ");
+            /*lua.DoString(@"
+    Sun = {}
+    
+    function Sun.SetDirection(x, y, z)
+        engine.Sun:SetDirection(Vector3(x, y, z))
+    end
+    
+    function Sun.SetColor(r, g, b)
+        engine.Sun:SetColor(Vector3(r, g, b))
+    end
+    
+    function Sun.SetIntensity(value)
+        engine.Sun:SetIntensity(value)
+    end
+    
+    function Sun.SetAngles(pitch, yaw)
+        engine.Sun:SetAngles(pitch, yaw)
+    end
+    
+    function Sun.SetTimeOfDay(time)
+        engine.Sun:SetTimeOfDay(time)
+    end
+");
+
+            // Make the singleton accessible from Lua
+            lua["engine.Sun"] = Sun.Instance;*/
 
 
             // Register camera access
@@ -620,6 +661,31 @@ namespace SteveEngine
         {
             Console.WriteLine("MeshFactory: Creating cube mesh");
             return Mesh.CreateCube();
+        }
+        public Mesh CreateSphere()
+        {
+            Console.WriteLine("MeshFactory: Creating sphere mesh");
+            return Mesh.CreateSphere();
+        }
+        public Mesh CreateCone()
+        {
+            Console.WriteLine("MeshFactory: Creating cone mesh");
+            return Mesh.CreateCone();
+        }
+        public Mesh CreateCapsule()
+        {
+            Console.WriteLine("MeshFactory: Creating Capsule mesh");
+            return Mesh.CreateCapsule();
+        }
+        public Mesh CreateQuad()
+        {
+            Console.WriteLine("MeshFactory: Creating Quad mesh");
+            return Mesh.CreateQuad();
+        }
+        public Mesh CreatePlane()
+        {
+            Console.WriteLine("MeshFactory: Creating Plane mesh");
+            return Mesh.CreatePlane();
         }
     }
 

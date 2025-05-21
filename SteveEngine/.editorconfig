@@ -20,6 +20,12 @@ csharp_style_expression_bodied_lambdas = true:silent
 csharp_style_expression_bodied_local_functions = false:silent
 csharp_indent_labels = one_less_than_current
 
+# CS0219: Variable is assigned but its value is never used
+dotnet_diagnostic.CS0219.severity = none
+
+# CS0114: Member hides inherited member; missing override keyword
+dotnet_diagnostic.CS0114.severity = none
+
 [*.{cs,vb}]
 #### Naming styles ####
 
